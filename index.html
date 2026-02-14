@@ -2,63 +2,100 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Entity Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CII Entity Generator</title>
+
 <style>
 body{
-    background:#111;
-    color:#eee;
+    background:#0d0d0d;
+    color:#e0e0e0;
     font-family:monospace;
     padding:20px;
 }
+h2{
+    border-bottom:1px solid #444;
+    padding-bottom:10px;
+}
 button{
     padding:10px 20px;
-    background:#222;
+    background:#1a1a1a;
     color:#fff;
     border:1px solid #555;
     cursor:pointer;
+    margin-top:10px;
+}
+button:hover{
+    background:#222;
 }
 textarea{
     width:100%;
-    height:400px;
+    height:500px;
     background:#000;
-    color:#0f0;
+    color:#00ff88;
     margin-top:20px;
-    padding:10px;
+    padding:15px;
+    white-space:pre;
 }
 select{
     padding:5px;
     margin-left:10px;
+    background:#111;
+    color:#fff;
+    border:1px solid #555;
 }
 </style>
 </head>
+
 <body>
 
-<h2>Random Entity Generator</h2>
+<h2>CII Random Entity Generator</h2>
 
-<label>Level:
+<label>
+ACCESS Level:
 <select id="level">
 <option value="1">Lv.1</option>
 <option value="2">Lv.2</option>
 <option value="3">Lv.3</option>
+<option value="4">Lv.4</option>
+<option value="5">Lv.5</option>
 </select>
 </label>
 
-<button onclick="generateEntity()">Generate</button>
+<br>
+<button onclick="generateEntity()">Generate Entity</button>
 
 <textarea id="output" readonly></textarea>
 
 <script>
 
-const levelLimits = {
-    1: 20000,
-    2: 10000,
-    3: 5000,
-    4: 1000,
-    5: 100
+const classifications = {
+    "空間干渉型": [
+        "特定座標において空間層が多重化する現象が確認されている。",
+        "内部進入時、出口の位置が再定義される。",
+        "観測者ごとに内部構造が変動する可能性が示唆される。",
+        "座標固定が困難であり、位置情報が不安定である。"
+    ],
+    "現象発生型": [
+        "局地的時間誤差が断続的に発生する。",
+        "音響波形が逆相で観測される。",
+        "視認不能な衝撃現象が周期発生する。",
+        "温度変化が物理法則に反する挙動を示す。"
+    ],
+    "物質変質型": [
+        "接触物体の分子配列が再構築される。",
+        "金属物質が有機化する現象が確認された。",
+        "硬度および質量が不規則変動する。",
+        "外見と内部構造が一致しない。"
+    ],
+    "生物異常型": [
+        "急速再生能力を保持する。",
+        "視線接触により神経負荷が発生する。",
+        "外見が周囲の記憶依存で変化する。",
+        "通常の生命活動指標を逸脱している。"
+    ]
 };
 
 const statuses = ["Active", "Dormant", "Archived", "Sealed"];
-const classifications = ["空間干渉型", "現象発生型", "物質変質型", "生物異常型"];
 
 function randomFrom(arr){
     return arr[Math.floor(Math.random() * arr.length)];
@@ -70,28 +107,22 @@ function pad(num){
 
 function getUniqueNumber(){
     let used = JSON.parse(localStorage.getItem("cii_used_numbers") || "[]");
-
     let num;
     do {
         num = Math.floor(Math.random() * 9999) + 1;
     } while(used.includes(num));
-
     used.push(num);
     localStorage.setItem("cii_used_numbers", JSON.stringify(used));
-
     return pad(num);
 }
 
-function generateParagraph(baseText){
-    let text = baseText;
-    while(text.length < 1600){
-        text += `
-当該対象は自然発生的生成物と推定されておりますが、生成過程の直接観測には成功しておりません。
-周辺環境への影響は段階的に拡張する傾向が見られ、局所的な心理的不安、空間認識の歪曲、
-時間感覚の断絶など複合的干渉が報告されております。
-物理的破壊や排除行為は禁止されており、観測・記録のみに限定されます。
-CII規定FD-01およびFD-07に基づき、直接干渉は禁止されております。
-`;
+function buildSection(type){
+    let text = "";
+    while(text.length < 1700){
+        text += randomFrom(classifications[type]) + "\n";
+        text += "当該対象はCII監視規定下に置かれている。\n";
+        text += "干渉には承認が必要とされる。\n";
+        text += "観測班による定期更新が実施されている。\n\n";
     }
     return text;
 }
@@ -100,55 +131,22 @@ function generateEntity(){
 
     const level = document.getElementById("level").value;
     const fileNum = getUniqueNumber();
-    const classification = randomFrom(classifications);
+
+    const types = Object.keys(classifications);
+    const classification = randomFrom(types);
     const status = randomFrom(statuses);
 
-    // Lv.3以上はII固定、それ以下はランダム
-    const type = (level >= 3) ? "II" : (Math.random() > 0.3 ? "II" : "UI");
+    const entityType = (level >= 3) ? "II" : (Math.random() > 0.3 ? "II" : "UI");
 
-    const baseOverview = `
-本対象は${classification}に分類される${type}であり、
-複数地域において断続的観測がなされております。
-発生条件は未確定ですが、環境的孤立状態または閉鎖的構造内での確認例が多く報告されております。
-`;
+    const overview = buildSection(classification);
+    const record = buildSection(classification);
+    const damage = buildSection(classification);
+    const classify = buildSection(classification);
+    const note = buildSection(classification);
 
-    const baseRecord = `
-初回観測は匿名政府経由報告に基づき登録されました。
-観測機器において数値的異常は検出されない場合が多く、
-主として視覚的・心理的干渉として記録されております。
-`;
-
-    const baseDamage = `
-現時点での直接的死者報告は限定的ですが、
-失踪・精神崩壊・長期入院等の二次被害が確認されております。
-被害規模はLv.${level}基準に基づき分類されております。
-`;
-
-    const baseClassify = `
-自然発生性が否定できないためEntityとして登録されました。
-UI指定からIIへ昇格する可能性があり、
-継続観測対象とされております。
-`;
-
-    const baseNote = `
-本件は将来的にGIS指定対象へ移行する可能性があります。
-研究部門への追加資料送付済。
-`;
-
-    const baseCore = (level >= 4) ? `
-CORE緊急審議に付されました。
-Lv.5職員の書類承認後、観測継続のみと決定。
-` : `該当なし`;
-
-    const overview = generateParagraph(baseOverview);
-    const record = generateParagraph(baseRecord);
-    const damage = generateParagraph(baseDamage);
-    const classify = generateParagraph(baseClassify);
-    const note = generateParagraph(baseNote);
-
-    const output = `
-CII/CL/File-${fileNum}
-Classification: Entity-${fileNum} (${type})
+    const output = 
+`CII/CL/File-${fileNum}
+Classification: Entity-${fileNum} (${entityType})
 ACCESS: Lv.${level}
 Status: ${status}
 ─────
@@ -174,9 +172,8 @@ ${note}
 ─────
 ■ CORE審議履歴（該当時）
 ─────
-${baseCore}
-────────────────
-`;
+${level >= 4 ? "CORE審議実施済。" : "該当なし"}
+────────────────`;
 
     document.getElementById("output").value = output;
 }
