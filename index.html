@@ -116,13 +116,38 @@ function getUniqueNumber(){
     return pad(num);
 }
 
+function shuffle(array){
+    return array.sort(() => Math.random() - 0.5);
+}
+
 function buildSection(type){
+
+    let base = shuffle([...classifications[type]]);
     let text = "";
-    while(text.length < 1700){
-        text += randomFrom(classifications[type]) + "\n";
-        text += "当該対象はCII監視規定下に置かれている。\n";
-        text += "干渉には承認が必要とされる。\n";
-        text += "観測班による定期更新が実施されている。\n\n";
+    let index = 0;
+
+    while(text.length < 1800){
+
+        if(index >= base.length){
+            base = shuffle([...classifications[type]]);
+            index = 0;
+        }
+
+        const main = base[index++];
+        const variation = [
+            "当該対象は現在も監視継続中である。",
+            "干渉試験は制限下でのみ実施される。",
+            "観測値は記録班により逐次更新されている。",
+            "関連事象の因果関係は未確定である。",
+            "再現性は確認されていない。"
+        ];
+
+        text += main + "\n";
+        text += randomFrom(variation) + "\n\n";
+    }
+
+    return text;
+}
     }
     return text;
 }
