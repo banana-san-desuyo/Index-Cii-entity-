@@ -48,70 +48,139 @@ select{
 <textarea id="output" readonly></textarea>
 
 <script>
+
 const levelLimits = {
-    1: 10,
-    2: 7,
-    3: 5
+    1: 20000,
+    2: 10000,
+    3: 5000,
+    4: 1000,
+    5: 100
 };
 
-const generatedCount = {
-    1: 0,
-    2: 0,
-    3: 0
-};
-
-const types = ["人型", "四足型", "浮遊型", "擬態型"];
-const traits = ["視認すると接近する", "音に反応する", "光を嫌う", "一定距離を保つ"];
-const environments = ["廃病院", "地下駐車場", "森林地帯", "高層ビル内部"];
-const behaviors = ["無音で移動する", "低い唸り声を発する", "壁を這う", "突然静止する"];
+const statuses = ["Active", "Dormant", "Archived", "Sealed"];
+const classifications = ["空間干渉型", "現象発生型", "物質変質型", "生物異常型"];
 
 function randomFrom(arr){
-    return arr[Math.floor(Math.random()*arr.length)];
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pad(num){
+    return num.toString().padStart(4,'0');
+}
+
+function getUniqueNumber(){
+    let used = JSON.parse(localStorage.getItem("cii_used_numbers") || "[]");
+
+    let num;
+    do {
+        num = Math.floor(Math.random() * 9999) + 1;
+    } while(used.includes(num));
+
+    used.push(num);
+    localStorage.setItem("cii_used_numbers", JSON.stringify(used));
+
+    return pad(num);
+}
+
+function generateParagraph(baseText){
+    let text = baseText;
+    while(text.length < 1600){
+        text += `
+当該対象は自然発生的生成物と推定されておりますが、生成過程の直接観測には成功しておりません。
+周辺環境への影響は段階的に拡張する傾向が見られ、局所的な心理的不安、空間認識の歪曲、
+時間感覚の断絶など複合的干渉が報告されております。
+物理的破壊や排除行為は禁止されており、観測・記録のみに限定されます。
+CII規定FD-01およびFD-07に基づき、直接干渉は禁止されております。
+`;
+    }
+    return text;
 }
 
 function generateEntity(){
+
     const level = document.getElementById("level").value;
+    const fileNum = getUniqueNumber();
+    const classification = randomFrom(classifications);
+    const status = randomFrom(statuses);
 
-    if(generatedCount[level] >= levelLimits[level]){
-        alert("このLvは上限に達している");
-        return;
-    }
+    // Lv.3以上はII固定、それ以下はランダム
+    const type = (level >= 3) ? "II" : (Math.random() > 0.3 ? "II" : "UI");
 
-    generatedCount[level]++;
-
-    const type = randomFrom(types);
-    const trait = randomFrom(traits);
-    const env = randomFrom(environments);
-    const behavior = randomFrom(behaviors);
-
-    let text = `
-Entity Report
-
-危険度: Lv.${level}
-分類: ${type}
-出現環境: ${env}
-
-概要:
-本個体は${type}に分類される存在であり、${env}にて確認されている。
-主な特性として「${trait}」の性質を持ち、
-行動パターンは「${behavior}」が確認されている。
-
-詳細記録:
+    const baseOverview = `
+本対象は${classification}に分類される${type}であり、
+複数地域において断続的観測がなされております。
+発生条件は未確定ですが、環境的孤立状態または閉鎖的構造内での確認例が多く報告されております。
 `;
 
-    // 1500文字以上にするための補強
-    while(text.length < 1500){
-        text += `
-観測時、対象は不自然な挙動を示した。
-視線を外した瞬間に位置が変化している可能性がある。
-直接的な接触は推奨されない。
-物理攻撃への耐性は未確定。
-精神的圧迫感を伴う存在である。
+    const baseRecord = `
+初回観測は匿名政府経由報告に基づき登録されました。
+観測機器において数値的異常は検出されない場合が多く、
+主として視覚的・心理的干渉として記録されております。
 `;
-    }
 
-    document.getElementById("output").value = text;
+    const baseDamage = `
+現時点での直接的死者報告は限定的ですが、
+失踪・精神崩壊・長期入院等の二次被害が確認されております。
+被害規模はLv.${level}基準に基づき分類されております。
+`;
+
+    const baseClassify = `
+自然発生性が否定できないためEntityとして登録されました。
+UI指定からIIへ昇格する可能性があり、
+継続観測対象とされております。
+`;
+
+    const baseNote = `
+本件は将来的にGIS指定対象へ移行する可能性があります。
+研究部門への追加資料送付済。
+`;
+
+    const baseCore = (level >= 4) ? `
+CORE緊急審議に付されました。
+Lv.5職員の書類承認後、観測継続のみと決定。
+` : `該当なし`;
+
+    const overview = generateParagraph(baseOverview);
+    const record = generateParagraph(baseRecord);
+    const damage = generateParagraph(baseDamage);
+    const classify = generateParagraph(baseClassify);
+    const note = generateParagraph(baseNote);
+
+    const output = `
+CII/CL/File-${fileNum}
+Classification: Entity-${fileNum} (${type})
+ACCESS: Lv.${level}
+Status: ${status}
+─────
+■ 概要
+─────
+${overview}
+─────
+■ 観測記録
+─────
+${record}
+─────
+■ 被害状況
+─────
+${damage}
+─────
+■ 分類経緯
+─────
+${classify}
+─────
+■ 補足
+─────
+${note}
+─────
+■ CORE審議履歴（該当時）
+─────
+${baseCore}
+────────────────
+`;
+
+    document.getElementById("output").value = output;
 }
+
 </script>
 
 </body>
